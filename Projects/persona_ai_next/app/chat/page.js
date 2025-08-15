@@ -57,6 +57,7 @@ const ChatPage = () => {
         role: "assistant", 
         content: data.content, 
         timestamp: new Date(),
+        persona: selectedPersona
       }
       
       setMessages(prev => [...prev, aiMessage])

@@ -25,7 +25,7 @@ export async function POST(req) {
     });
 
     return Response.json({ 
-      content: response.choices[0].message.content 
+      content: response.choices[0].message.content
     });
     
   } catch (error) {
