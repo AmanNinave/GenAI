@@ -56,8 +56,7 @@ const ChatPage = () => {
       const aiMessage = { 
         role: "assistant", 
         content: data.content, 
-        timestamp: new Date(), 
-        persona: selectedPersona 
+        timestamp: new Date(),
       }
       
       setMessages(prev => [...prev, aiMessage])
@@ -80,7 +79,7 @@ const ChatPage = () => {
     return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
-  const renderAvatar = (persona, size = "w-10 h-10") => {
+  const renderAvatar = (persona, size = "w-15 h-10") => {
     if (persona?.avatar?.startsWith('http')) {
       return (
         <div className={`${size} rounded-full overflow-hidden shadow-sm bg-slate-200 dark:bg-slate-600`}>
