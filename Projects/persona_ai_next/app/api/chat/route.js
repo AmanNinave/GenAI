@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { generateRAGResponse, formatConversationHistory } from "../../../lib/chatService.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -6,8 +7,22 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { messages, persona } = await req.json();
+    const { messages, persona, useRAG } = await req.json();
     
+    // If RAG is enabled, use the RAG service
+    if (useRAG) {
+      const lastMessage = messages[messages.length - 1];
+      const conversationHistory = formatConversationHistory(messages.slice(0, -1));
+      
+      const ragResponse = await generateRAGResponse(lastMessage.content, conversationHistory);
+      
+      return Response.json({ 
+        content: ragResponse.message,
+        sources: ragResponse.sources
+      });
+    }
+    
+    // Otherwise, use the regular chat completion
     // Add system message with persona context
     const systemMessage = {
       role: "system",

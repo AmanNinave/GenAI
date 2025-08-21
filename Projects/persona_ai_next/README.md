@@ -1,36 +1,147 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# RAG Notebook - NotebookLM Clone
 
-## Getting Started
+A Retrieval Augmented Generation (RAG) application that allows you to upload documents, websites, and YouTube videos to create a personal knowledge base and ask questions about your content.
 
-First, run the development server:
+## Features
 
+- **Multiple Data Sources Support**:
+  - Text input (direct text entry)
+  - File uploads (PDF, TXT, CSV, DOCX)
+  - Website content extraction
+  - YouTube video transcripts
+
+- **Advanced RAG Capabilities**:
+  - Document chunking and indexing
+  - Semantic search using vector embeddings
+  - Context-aware responses with source citations
+  - Conversation history support
+
+- **Modern UI**:
+  - Clean, responsive interface
+  - Real-time data source management
+  - Source tracking for transparency
+
+## Prerequisites
+
+1. **Node.js** (v18 or higher)
+2. **OpenAI API Key**
+3. **Qdrant Vector Database** (local or cloud instance)
+
+## Setup Instructions
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd persona_ai_next
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 3. Set up Qdrant Vector Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+#### Option A: Local Qdrant with Docker
+```bash
+docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
+```
 
-## Learn More
+#### Option B: Qdrant Cloud
+Sign up at [cloud.qdrant.io](https://cloud.qdrant.io) and get your cloud URL and API key.
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Configure environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a `.env.local` file in the root directory:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+# OpenAI API Key
+OPENAI_API_KEY=your_openai_api_key_here
 
-## Deploy on Vercel
+# Qdrant Configuration
+QDRANT_URL=http://localhost:6333  # or your Qdrant Cloud URL
+QDRANT_COLLECTION_NAME=rag-notebook-collection
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 5. Run the development server
+```bash
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Usage
+
+1. **Add Data Sources**:
+   - Click on the tabs in the left sidebar
+   - Add text, upload files, enter website URLs, or YouTube links
+   - Data will be processed and indexed automatically
+
+2. **Ask Questions**:
+   - Type your questions in the chat input
+   - The AI will search through your uploaded content
+   - Responses include source citations
+
+3. **Supported File Types**:
+   - PDF documents
+   - Text files (.txt)
+   - CSV files
+   - Word documents (.docx)
+
+## Architecture
+
+- **Frontend**: Next.js 15 with React 19
+- **Styling**: Tailwind CSS
+- **Vector Store**: Qdrant
+- **Embeddings**: OpenAI text-embedding-3-large
+- **LLM**: GPT-4o-mini
+- **Document Processing**: LangChain
+
+## Project Structure
+
+```
+persona_ai_next/
+├── app/
+│   ├── (components)/      # Reusable UI components
+│   ├── api/              # API routes
+│   │   ├── add-text/     # Text input processing
+│   │   ├── add-website/  # Website scraping
+│   │   ├── add-youtube/  # YouTube transcript extraction
+│   │   ├── chat/         # RAG chat endpoint
+│   │   └── upload/       # File upload processing
+│   └── page.js           # Main RAG interface
+├── lib/
+│   ├── chatService.js    # RAG response generation
+│   ├── documentProcessors.js  # Document parsing
+│   └── vectorStore.js    # Vector database operations
+└── package.json
+```
+
+## Development Notes
+
+- The application uses server-side processing for document handling
+- Vector embeddings are created using OpenAI's embedding model
+- Document chunking is set to 1000 characters with 200 character overlap
+- The chat maintains conversation history for context
+
+## Troubleshooting
+
+1. **"Vector store not initialized" error**:
+   - Ensure Qdrant is running
+   - Check QDRANT_URL in your .env.local file
+
+2. **"Failed to add document" errors**:
+   - Verify your OpenAI API key is valid
+   - Check that the file size is under 10MB
+
+3. **YouTube transcript errors**:
+   - Ensure the video has captions available
+   - Check that the URL is a valid YouTube video link
+
+## Future Enhancements
+
+- Support for more file types
+- Document management (delete/update)
+- Export conversations
+- Multi-language support
+- Advanced search filters

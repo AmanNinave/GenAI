@@ -1,36 +1,6 @@
 "use client"
 
 const ChatMessage = ({ message, formatTime }) => {
-  const renderAvatar = (persona) => {
-    if (persona?.avatar?.startsWith('http')) {
-      return (
-        <div className="w-8 h-8 rounded-full overflow-hidden shadow-sm bg-slate-200 dark:bg-slate-600">
-          <img 
-            src={persona.avatar} 
-            alt={persona.name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Hide the image and show fallback
-              e.target.style.display = 'none';
-              const fallback = e.target.parentElement.querySelector('.avatar-fallback');
-              if (fallback) {
-                fallback.style.display = 'flex';
-              }
-            }}
-          />
-          <div className="avatar-fallback hidden w-full h-full items-center justify-center bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold text-xs">
-            {persona.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className="w-8 h-8 rounded-full bg-slate-500 flex items-center justify-center text-white text-sm shadow-sm">
-        <span>{persona?.avatar || "🤖"}</span>
-      </div>
-    );
-  };
-
   return (
     <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[70%] ${message.role === "user" ? "order-2" : "order-1"}`}>
@@ -42,6 +12,26 @@ const ChatMessage = ({ message, formatTime }) => {
           }`}
         >
           <p className="text-sm leading-relaxed">{message.content}</p>
+          
+          {/* Sources section for RAG responses */}
+          {message.sources && message.sources.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
+              <p className="text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
+                Sources:
+              </p>
+              <div className="space-y-1">
+                {message.sources.map((source, index) => (
+                  <div key={index} className="text-xs text-slate-600 dark:text-slate-400">
+                    <span className="inline-flex items-center">
+                      <span className="mr-1">•</span>
+                      <span className="capitalize">{source.type}</span>: {source.source}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <p className={`text-xs mt-1 ${
             message.role === "user" ? "text-blue-100" : "text-slate-500 dark:text-slate-400"
           }`}>
@@ -57,7 +47,9 @@ const ChatMessage = ({ message, formatTime }) => {
             <span>👤</span>
           </div>
         ) : (
-          renderAvatar(message.persona)
+          <div className="w-8 h-8 rounded-full bg-slate-500 flex items-center justify-center text-white text-sm shadow-sm">
+            <span>🤖</span>
+          </div>
         )}
       </div>
     </div>

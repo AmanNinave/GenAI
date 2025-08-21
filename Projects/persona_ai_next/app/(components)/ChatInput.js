@@ -1,14 +1,14 @@
 "use client"
 
-const ChatInput = ({ input, setInput, onSubmit, isLoading, persona }) => {
+const ChatInput = ({ input, setInput, onSubmit, isLoading }) => {
   return (
-    <div className="border-t border-slate-200 dark:border-slate-700 p-4">
+    <div className="w-full">
       <form onSubmit={onSubmit} className="flex space-x-3">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={`Message ${persona.name}...`}
+          placeholder="Ask a question about your documents..."
           className="flex-1 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-3 text-slate-700 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           disabled={isLoading}
         />
