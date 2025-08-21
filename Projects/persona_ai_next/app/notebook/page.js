@@ -5,7 +5,7 @@ import ChatMessage from "../(components)/ChatMessage"
 import LoadingIndicator from "../(components)/LoadingIndicator"
 import ChatInput from "../(components)/ChatInput"
 
-export default function Home() {
+export default function NotebookPage() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
