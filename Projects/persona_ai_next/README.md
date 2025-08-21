@@ -25,7 +25,7 @@ A Retrieval Augmented Generation (RAG) application that allows you to upload doc
 
 1. **Node.js** (v18 or higher)
 2. **OpenAI API Key**
-3. **Qdrant Vector Database** (local or cloud instance)
+3. **Docker and Docker Compose** (for Qdrant)
 
 ## Setup Instructions
 
@@ -42,12 +42,21 @@ npm install
 
 ### 3. Set up Qdrant Vector Database
 
-#### Option A: Local Qdrant with Docker
+#### Option A: Using Docker Compose (Recommended)
+```bash
+# Start Qdrant using Docker Compose
+docker-compose up -d
+
+# Check if Qdrant is running
+docker-compose ps
+```
+
+#### Option B: Manual Docker Run
 ```bash
 docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant
 ```
 
-#### Option B: Qdrant Cloud
+#### Option C: Qdrant Cloud
 Sign up at [cloud.qdrant.io](https://cloud.qdrant.io) and get your cloud URL and API key.
 
 ### 4. Configure environment variables
@@ -63,12 +72,52 @@ QDRANT_URL=http://localhost:6333  # or your Qdrant Cloud URL
 QDRANT_COLLECTION_NAME=rag-notebook-collection
 ```
 
-### 5. Run the development server
+### 5. Verify setup (optional)
+```bash
+npm run check-setup
+```
+
+### 6. Run the development server
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Docker Compose Configuration
+
+The project includes a `docker-compose.yml` file for easy Qdrant setup:
+
+```yaml
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-vector-db
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+```
+
+### Docker Compose Commands
+
+```bash
+# Start Qdrant
+docker-compose up -d
+
+# Stop Qdrant
+docker-compose down
+
+# View logs
+docker-compose logs -f qdrant
+
+# Restart Qdrant
+docker-compose restart qdrant
+```
 
 ## Usage
 
@@ -109,11 +158,14 @@ persona_ai_next/
 │   │   ├── add-youtube/  # YouTube transcript extraction
 │   │   ├── chat/         # RAG chat endpoint
 │   │   └── upload/       # File upload processing
-│   └── page.js           # Main RAG interface
+│   ├── chat/             # Original chat application
+│   ├── notebook/         # RAG notebook application
+│   └── page.js           # Landing page
 ├── lib/
 │   ├── chatService.js    # RAG response generation
 │   ├── documentProcessors.js  # Document parsing
 │   └── vectorStore.js    # Vector database operations
+├── docker-compose.yml    # Qdrant Docker configuration
 └── package.json
 ```
 
@@ -127,7 +179,7 @@ persona_ai_next/
 ## Troubleshooting
 
 1. **"Vector store not initialized" error**:
-   - Ensure Qdrant is running
+   - Ensure Qdrant is running: `docker-compose ps`
    - Check QDRANT_URL in your .env.local file
 
 2. **"Failed to add document" errors**:
@@ -137,6 +189,10 @@ persona_ai_next/
 3. **YouTube transcript errors**:
    - Ensure the video has captions available
    - Check that the URL is a valid YouTube video link
+
+4. **Docker issues**:
+   - Make sure Docker is running
+   - Try restarting the container: `docker-compose restart qdrant`
 
 ## Future Enhancements
 

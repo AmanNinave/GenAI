@@ -34,7 +34,7 @@ export default function NotebookPage() {
       const response = await fetch("/api/add-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: textInput, source: "Manual Text Input" }),
+        body: JSON.stringify({ text: textInput, source: 'text-input' }),
       })
       
       if (!response.ok) throw new Error("Failed to add text")
@@ -163,7 +163,7 @@ export default function NotebookPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch("/api/chat-notebook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

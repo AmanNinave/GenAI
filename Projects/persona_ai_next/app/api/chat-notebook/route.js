@@ -3,7 +3,20 @@ import { generateRAGResponse, formatConversationHistory } from '../../../lib/cha
 
 export async function POST(request) {
   try {
-    const { message, history } = await request.json();
+    const { messages, useRAG } = await request.json();
+
+      // If RAG is enabled, use the RAG service
+    if (useRAG) {
+      const lastMessage = messages[messages.length - 1];
+      const conversationHistory = messages.slice(0, -1);
+      
+      const ragResponse = await generateRAGResponse(lastMessage.content, conversationHistory);
+      
+      return Response.json({ 
+        content: ragResponse.message,
+        sources: ragResponse.sources
+      });
+    }
 
     if (!message || message.trim().length === 0) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
