@@ -1,11 +1,14 @@
 import { Document } from '@langchain/core/documents';
 import fs from 'fs';
 import path from 'path';
-import pdf from 'pdf-parse';
-import Papa from 'papaparse';
-import mammoth from 'mammoth';
-import { YoutubeTranscript } from 'youtube-transcript';
-import * as cheerio from 'cheerio';
+
+// LangChain document loaders
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+// import { TextLoader } from "@langchain/community/document_loaders/fs/text";
+// import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
+// import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
+// import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
+// import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
 
 export async function processTextInput(text, source = 'text-input') {
   try {
@@ -34,7 +37,7 @@ export async function processUploadedFile(filePath, originalName) {
       case '.docx':
         return await processDocx(filePath, originalName);
       default:
-        throw new Error(`Unsupported file type: ${extension}`);
+        throw new Error(`Unsupported file type: ${extension}. Supported types: PDF, TXT, CSV, DOCX`);
     }
   } catch (error) {
     console.error('Error processing uploaded file:', error);
@@ -44,191 +47,141 @@ export async function processUploadedFile(filePath, originalName) {
 
 async function processPDF(filePath, originalName) {
   try {
-    const dataBuffer = fs.readFileSync(filePath);
-    const data = await pdf(dataBuffer);
+    const loader = new PDFLoader(filePath);
+    const docs = await loader.load();
     
-    const doc = new Document({
-      pageContent: data.text,
+    // Add metadata to each document
+    const processedDocs = docs.map(doc => new Document({
+      pageContent: doc.pageContent,
       metadata: { 
+        ...doc.metadata,
         source: originalName, 
-        type: 'pdf',
-        pages: data.numpages
+        type: 'pdf'
       }
-    });
+    }));
     
-    return [doc];
+    return processedDocs;
   } catch (error) {
     console.error('Error processing PDF:', error);
-    throw error;
+    throw new Error(`Failed to process PDF file: ${error.message}`);
   }
 }
 
-async function processCSV(filePath, originalName) {
-  try {
-    const csvContent = fs.readFileSync(filePath, 'utf8');
-    const results = Papa.parse(csvContent, { header: true });
+// async function processCSV(filePath, originalName) {
+//   try {
+//     const loader = new CSVLoader(filePath);
+//     const docs = await loader.load();
     
-    const textContent = results.data.map(row => 
-      Object.entries(row).map(([key, value]) => `${key}: ${value}`).join(', ')
-    ).join('\n');
+//     // Add metadata to each document
+//     const processedDocs = docs.map(doc => new Document({
+//       pageContent: doc.pageContent,
+//       metadata: { 
+//         ...doc.metadata,
+//         source: originalName, 
+//         type: 'csv'
+//       }
+//     }));
     
-    const doc = new Document({
-      pageContent: textContent,
-      metadata: { 
-        source: originalName, 
-        type: 'csv',
-        rows: results.data.length
-      }
-    });
-    
-    return [doc];
-  } catch (error) {
-    console.error('Error processing CSV:', error);
-    throw error;
-  }
-}
+//     return processedDocs;
+//   } catch (error) {
+//     console.error('Error processing CSV:', error);
+//     throw new Error(`Failed to process CSV file: ${error.message}`);
+//   }
+// }
 
-async function processText(filePath, originalName) {
-  try {
-    const textContent = fs.readFileSync(filePath, 'utf8');
+// async function processText(filePath, originalName) {
+//   try {
+//     const loader = new TextLoader(filePath);
+//     const docs = await loader.load();
     
-    const doc = new Document({
-      pageContent: textContent,
-      metadata: { 
-        source: originalName, 
-        type: 'text'
-      }
-    });
+//     // Add metadata to each document
+//     const processedDocs = docs.map(doc => new Document({
+//       pageContent: doc.pageContent,
+//       metadata: { 
+//         ...doc.metadata,
+//         source: originalName, 
+//         type: 'text'
+//       }
+//     }));
     
-    return [doc];
-  } catch (error) {
-    console.error('Error processing text file:', error);
-    throw error;
-  }
-}
+//     return processedDocs;
+//   } catch (error) {
+//     console.error('Error processing text file:', error);
+//     throw new Error(`Failed to process text file: ${error.message}`);
+//   }
+// }
 
-async function processDocx(filePath, originalName) {
-  try {
-    const result = await mammoth.extractRawText({ path: filePath });
+// async function processDocx(filePath, originalName) {
+//   try {
+//     const loader = new DocxLoader(filePath);
+//     const docs = await loader.load();
     
-    const doc = new Document({
-      pageContent: result.value,
-      metadata: { 
-        source: originalName, 
-        type: 'docx'
-      }
-    });
+//     // Add metadata to each document
+//     const processedDocs = docs.map(doc => new Document({
+//       pageContent: doc.pageContent,
+//       metadata: { 
+//         ...doc.metadata,
+//         source: originalName, 
+//         type: 'docx'
+//       }
+//     }));
     
-    return [doc];
-  } catch (error) {
-    console.error('Error processing DOCX:', error);
-    throw error;
-  }
-}
+//     return processedDocs;
+//   } catch (error) {
+//     console.error('Error processing DOCX:', error);
+//     throw new Error(`Failed to process DOCX file: ${error.message}`);
+//   }
+// }
 
-export async function processWebsite(url) {
-  try {
-    // Fetch the webpage content
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+// export async function processWebsite(url) {
+//   try {
+//     const loader = new CheerioWebBaseLoader(url, {
+//       selector: 'body',
+//     });
     
-    const html = await response.text();
+//     const docs = await loader.load();
     
-    // Use cheerio to parse and extract text
-    const $ = cheerio.load(html);
+//     // Clean up the content and add metadata
+//     const processedDocs = docs.map(doc => new Document({
+//       pageContent: doc.pageContent.replace(/\s+/g, ' ').trim(),
+//       metadata: { 
+//         ...doc.metadata,
+//         source: url, 
+//         type: 'website'
+//       }
+//     }));
     
-    // Remove script and style elements
-    $('script').remove();
-    $('style').remove();
-    
-    // Get the title
-    const title = $('title').text() || $('h1').first().text() || 'Untitled';
-    
-    // Extract text content from body
-    const bodyText = $('body').text();
-    
-    // Clean up the text
-    const cleanedText = bodyText
-      .replace(/\s+/g, ' ')
-      .replace(/\n+/g, ' ')
-      .trim();
-    
-    if (!cleanedText) {
-      throw new Error('No text content found on the webpage');
-    }
-    
-    const doc = new Document({
-      pageContent: cleanedText,
-      metadata: { 
-        source: url, 
-        type: 'website',
-        title: title.trim()
-      }
-    });
-    
-    return [doc];
-  } catch (error) {
-    console.error('Error processing website:', error);
-    throw error;
-  }
-}
+//     return processedDocs;
+//   } catch (error) {
+//     console.error('Error processing website:', error);
+//     throw new Error(`Failed to process website: ${error.message}`);
+//   }
+// }
 
-export async function processYouTubeVideo(url) {
-  try {
-    // Extract video ID from URL
-    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-    if (!videoIdMatch) {
-      throw new Error('Invalid YouTube URL');
-    }
+// export async function processYouTubeVideo(url) {
+//   try {
+//     const loader = new YoutubeLoader(url, {
+//       addVideoInfo: true,
+//     });
     
-    const videoId = videoIdMatch[1];
+//     const docs = await loader.load();
     
-    // Fetch the transcript
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+//     // Add metadata to each document
+//     const processedDocs = docs.map(doc => new Document({
+//       pageContent: doc.pageContent,
+//       metadata: { 
+//         ...doc.metadata,
+//         source: url, 
+//         type: 'youtube'
+//       }
+//     }));
     
-    if (!transcript || transcript.length === 0) {
-      throw new Error('No transcript available for this video');
-    }
-    
-    // Combine transcript segments into a single text
-    const fullText = transcript
-      .map(segment => segment.text)
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    // Try to get video title from the page
-    let title = 'YouTube Video';
-    try {
-      // For title, we'll use a simple approach - extract from URL if available
-      // In production, you might want to use YouTube Data API
-      const titleMatch = url.match(/[?&]title=([^&]+)/);
-      if (titleMatch) {
-        title = decodeURIComponent(titleMatch[1]);
-      }
-    } catch (e) {
-      // Keep default title
-    }
-    
-    const doc = new Document({
-      pageContent: fullText,
-      metadata: { 
-        source: url, 
-        type: 'youtube',
-        videoId: videoId,
-        title: title,
-        transcriptSegments: transcript.length
-      }
-    });
-    
-    return [doc];
-  } catch (error) {
-    console.error('Error processing YouTube video:', error);
-    throw error;
-  }
-}
+//     return processedDocs;
+//   } catch (error) {
+//     console.error('Error processing YouTube video:', error);
+//     throw new Error(`Failed to process YouTube video: ${error.message}`);
+//   }
+// }
 
 export function cleanupTempFile(filePath) {
   try {

@@ -40,21 +40,6 @@ function splitDocuments(documents, chunkSize = 1000, chunkOverlap = 200) {
   return splitDocs;
 }
 
-export async function initializeVectorStore() {
-  try {
-    const embeddings = getEmbeddings();
-    const vectorStore = await QdrantVectorStore.fromExistingCollection(
-      embeddings,
-      qdrantConfig
-    );
-    return vectorStore;
-  } catch (error) {
-    // Collection doesn't exist or embeddings not available
-    console.log('Creating new collection or missing embeddings setup...');
-    return null;
-  }
-}
-
 export async function addDocumentsToVectorStore(documents) {
   try {
     // Split documents into chunks
@@ -73,6 +58,21 @@ export async function addDocumentsToVectorStore(documents) {
   } catch (error) {
     console.error('Error adding documents to vector store:', error);
     throw error;
+  }
+}
+
+export async function initializeVectorStore() {
+  try {
+    const embeddings = getEmbeddings();
+    const vectorStore = await QdrantVectorStore.fromExistingCollection(
+      embeddings,
+      qdrantConfig
+    );
+    return vectorStore;
+  } catch (error) {
+    // Collection doesn't exist or embeddings not available
+    console.log('Creating new collection or missing embeddings setup...');
+    return null;
   }
 }
 

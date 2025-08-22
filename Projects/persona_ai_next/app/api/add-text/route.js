@@ -14,7 +14,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Text content too long. Maximum 50,000 characters.' }, { status: 400 });
     }
 
-    // Process the text input
+    // Process the text input ( convert text to documents)
     const documents = await processTextInput(text, source || 'text-input');
     
     // Add documents to vector store
