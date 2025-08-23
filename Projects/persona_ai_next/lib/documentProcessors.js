@@ -4,8 +4,8 @@ import path from 'path';
 
 // LangChain document loaders
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-// import { TextLoader } from "@langchain/community/document_loaders/fs/text";
-// import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
+import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
+import { TextLoader } from "langchain/document_loaders/fs/text";
 // import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 // import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
 // import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
@@ -67,49 +67,49 @@ async function processPDF(filePath, originalName) {
   }
 }
 
-// async function processCSV(filePath, originalName) {
-//   try {
-//     const loader = new CSVLoader(filePath);
-//     const docs = await loader.load();
+async function processCSV(filePath, originalName) {
+  try {
+    const loader = new CSVLoader(filePath);
+    const docs = await loader.load();
     
-//     // Add metadata to each document
-//     const processedDocs = docs.map(doc => new Document({
-//       pageContent: doc.pageContent,
-//       metadata: { 
-//         ...doc.metadata,
-//         source: originalName, 
-//         type: 'csv'
-//       }
-//     }));
+    // Add metadata to each document
+    const processedDocs = docs.map(doc => new Document({
+      pageContent: doc.pageContent,
+      metadata: { 
+        ...doc.metadata,
+        source: originalName, 
+        type: 'csv'
+      }
+    }));
     
-//     return processedDocs;
-//   } catch (error) {
-//     console.error('Error processing CSV:', error);
-//     throw new Error(`Failed to process CSV file: ${error.message}`);
-//   }
-// }
+    return processedDocs;
+  } catch (error) {
+    console.error('Error processing CSV:', error);
+    throw new Error(`Failed to process CSV file: ${error.message}`);
+  }
+}
 
-// async function processText(filePath, originalName) {
-//   try {
-//     const loader = new TextLoader(filePath);
-//     const docs = await loader.load();
+async function processText(filePath, originalName) {
+  try {
+    const loader = new TextLoader(filePath);
+    const docs = await loader.load();
     
-//     // Add metadata to each document
-//     const processedDocs = docs.map(doc => new Document({
-//       pageContent: doc.pageContent,
-//       metadata: { 
-//         ...doc.metadata,
-//         source: originalName, 
-//         type: 'text'
-//       }
-//     }));
+    // Add metadata to each document
+    const processedDocs = docs.map(doc => new Document({
+      pageContent: doc.pageContent,
+      metadata: { 
+        ...doc.metadata,
+        source: originalName, 
+        type: 'text'
+      }
+    }));
     
-//     return processedDocs;
-//   } catch (error) {
-//     console.error('Error processing text file:', error);
-//     throw new Error(`Failed to process text file: ${error.message}`);
-//   }
-// }
+    return processedDocs;
+  } catch (error) {
+    console.error('Error processing text file:', error);
+    throw new Error(`Failed to process text file: ${error.message}`);
+  }
+}
 
 // async function processDocx(filePath, originalName) {
 //   try {
