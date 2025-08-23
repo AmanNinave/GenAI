@@ -7,7 +7,9 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
-// import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
+
+import { RecursiveUrlLoader } from "@langchain/community/document_loaders/web/recursive_url";
+import { compile } from "html-to-text";
 // import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
 
 export async function processTextInput(text, source = 'text-input') {
@@ -133,30 +135,34 @@ async function processDocx(filePath, originalName) {
   }
 }
 
-// export async function processWebsite(url) {
-//   try {
-//     const loader = new CheerioWebBaseLoader(url, {
-//       selector: 'body',
-//     });
+export async function processWebsite(url) {
+  try {
+    const compiledConvert = compile({ wordwrap: 130 }); // returns (text: string) => string;
+
+    const loader = new RecursiveUrlLoader(url, {
+      extractor: compiledConvert,
+      maxDepth: 5,
+      excludeDirs: ['/api', '/docs/api'],
+    });
     
-//     const docs = await loader.load();
+    const docs = await loader.load();
     
-//     // Clean up the content and add metadata
-//     const processedDocs = docs.map(doc => new Document({
-//       pageContent: doc.pageContent.replace(/\s+/g, ' ').trim(),
-//       metadata: { 
-//         ...doc.metadata,
-//         source: url, 
-//         type: 'website'
-//       }
-//     }));
+    // Clean up the content and add metadata
+    const processedDocs = docs.map(doc => new Document({
+      pageContent: doc.pageContent.replace(/\s+/g, ' ').trim(),
+      metadata: { 
+        ...doc.metadata,
+        source: url, 
+        type: 'website'
+      }
+    }));
     
-//     return processedDocs;
-//   } catch (error) {
-//     console.error('Error processing website:', error);
-//     throw new Error(`Failed to process website: ${error.message}`);
-//   }
-// }
+    return processedDocs;
+  } catch (error) {
+    console.error('Error processing website:', error);
+    throw new Error(`Failed to process website: ${error.message}`);
+  }
+}
 
 // export async function processYouTubeVideo(url) {
 //   try {
