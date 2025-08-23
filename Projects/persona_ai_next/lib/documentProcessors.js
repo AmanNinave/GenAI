@@ -10,7 +10,7 @@ import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 
 import { RecursiveUrlLoader } from "@langchain/community/document_loaders/web/recursive_url";
 import { compile } from "html-to-text";
-// import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
+import { YoutubeLoader } from "@langchain/community/document_loaders/web/youtube";
 
 export async function processTextInput(text, source = 'text-input') {
   try {
@@ -164,30 +164,30 @@ export async function processWebsite(url) {
   }
 }
 
-// export async function processYouTubeVideo(url) {
-//   try {
-//     const loader = new YoutubeLoader(url, {
-//       addVideoInfo: true,
-//     });
+export async function processYouTubeVideo(url) {
+  try {
+    const loader = YoutubeLoader.createFromUrl(url, {
+      addVideoInfo: true,
+    });
     
-//     const docs = await loader.load();
+    const docs = await loader.load();
     
-//     // Add metadata to each document
-//     const processedDocs = docs.map(doc => new Document({
-//       pageContent: doc.pageContent,
-//       metadata: { 
-//         ...doc.metadata,
-//         source: url, 
-//         type: 'youtube'
-//       }
-//     }));
+    // Add metadata to each document
+    const processedDocs = docs.map(doc => new Document({
+      pageContent: doc.pageContent,
+      metadata: { 
+        ...doc.metadata,
+        source: url, 
+        type: 'youtube'
+      }
+    }));
     
-//     return processedDocs;
-//   } catch (error) {
-//     console.error('Error processing YouTube video:', error);
-//     throw new Error(`Failed to process YouTube video: ${error.message}`);
-//   }
-// }
+    return processedDocs;
+  } catch (error) {
+    console.error('Error processing YouTube video:', error);
+    throw new Error(`Failed to process YouTube video: ${error.message}`);
+  }
+}
 
 export function cleanupTempFile(filePath) {
   try {
