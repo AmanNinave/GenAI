@@ -135,6 +135,8 @@ async function processDocx(filePath, originalName) {
   }
 }
 
+// need to explore google api for website content
+// https://developers.google.com/search/docs/crawling-indexing
 export async function processWebsite(url) {
   try {
     const compiledConvert = compile({ wordwrap: 130 }); // returns (text: string) => string;
@@ -164,6 +166,7 @@ export async function processWebsite(url) {
   }
 }
 
+// need to explore google api for youtube video transcript
 export async function processYouTubeVideo(url) {
   try {
     const loader = YoutubeLoader.createFromUrl(url, {
