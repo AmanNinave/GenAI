@@ -7,8 +7,27 @@ const openai = new OpenAI({
 
 export async function POST(req) {
   try {
-    const { messages, persona } = await req.json();
-    
+    const { messages, persona, useRAG, filters } = await req.json();
+
+    // If RAG is enabled, use the RAG service
+    if (useRAG) {
+      const lastMessage = messages[messages.length - 1];
+      const conversationHistory = formatConversationHistory(messages.slice(0, -1));
+
+      // Pass filters to RAG response
+      const ragResponse = await generateRAGResponse(
+        lastMessage.content, 
+        conversationHistory,
+        filters || {}
+      );
+
+      return Response.json({
+        content: ragResponse.message,
+        sources: ragResponse.sources
+      });
+    }
+
+    // Otherwise, use the regular chat completion
     // Add system message with persona context
     const systemMessage = {
       role: "system",

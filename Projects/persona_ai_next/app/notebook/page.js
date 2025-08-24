@@ -17,6 +17,13 @@ export default function NotebookPage() {
   const [isAddingSource, setIsAddingSource] = useState(false)
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
+  
+  // Add filter states
+  const [selectedFilter, setSelectedFilter] = useState("all")
+  const [availableSources, setAvailableSources] = useState([])
+  const [databaseSources, setDatabaseSources] = useState([])
+  const [showDatabaseSources, setShowDatabaseSources] = useState(false)
+  const fetchDatabaseSourcesRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -25,6 +32,54 @@ export default function NotebookPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+
+// Update available sources when dataSources changes
+useEffect(() => {
+  const sources = dataSources.map(source => source.name);
+  setAvailableSources(sources);
+}, [dataSources]);
+
+// Load database sources on component mount
+useEffect(() => {
+  const loadDatabaseSources = async () => {
+    try {
+      const data = await fetchDatabaseSources();
+      const dbSources = data.sources || [];
+      const dbSourceNames = dbSources.map((source,index) => ({...source, name : source.source, id : `${Date.now()}-${index}`}));
+      setDataSources(prev => [...new Set([...prev, ...dbSourceNames])]);
+    } catch (error) {
+      console.error('Error loading database sources:', error);
+    }
+  };
+  
+  loadDatabaseSources();
+}, []); // Empty dependency array = run once on mount
+
+// Function to fetch all sources from database
+const fetchDatabaseSources = async () => {
+  try {
+    const response = await fetch('/api/list-sources');
+    if (!response.ok) throw new Error('Failed to fetch sources');
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching database sources:', error);
+    return { sources: [] };
+  }
+};
+
+// Function to handle fetching and displaying database sources
+const handleFetchDatabaseSources = async () => {
+  try {
+    const data = await fetchDatabaseSources();
+    setDatabaseSources(data.sources || []);
+    setShowDatabaseSources(true);
+  } catch (error) {
+    console.error('Error fetching database sources:', error);
+    alert('Failed to fetch sources from database');
+  }
+};
 
   const handleAddText = async () => {
     if (!textInput.trim()) return
@@ -163,11 +218,29 @@ export default function NotebookPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/chat-notebook", {
+      // Build filters based on selection
+      let filters = {};
+      if (selectedFilter !== "all") {
+        if (selectedFilter === "pdf") {
+          filters.type = "pdf";
+        } else if (selectedFilter === "vtt") {
+          filters.type = "vtt";
+        } else if (selectedFilter === "txt") {
+          filters.type = "txt";
+        } else if (selectedFilter === "docx") {
+          filters.type = "docx";
+        } else if (selectedFilter.startsWith("source:")) {
+          filters.source = selectedFilter.replace("source:", "");
+        }
+      }
+
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          messages: [...messages, userMessage]
+          messages: [...messages, userMessage],
+          useRAG: true,
+          filters: filters
         }),
       })
       
@@ -197,8 +270,41 @@ export default function NotebookPage() {
   }
 
   const formatTime = (timestamp) => {
+    if(!timestamp) return '';
     return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
+
+  // Add filter component
+  const FilterSelector = () => (
+    <div className="mb-4 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg">
+      <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        Filter Sources
+      </h3>
+      <select
+        value={selectedFilter}
+        onChange={(e) => setSelectedFilter(e.target.value)}
+        className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+      >
+        <option value="all">All Sources</option>
+        <option value="pdf">PDF Files Only</option>
+        <option value="vtt">VTT Files Only</option>
+        <option value="txt">Text Files Only</option>
+        <option value="docx">DOCX Files Only</option>
+        {availableSources.map(source => (
+          <option key={source} value={`source:${source}`}>
+            {source}
+          </option>
+        ))}
+      </select>
+      
+      <button
+        onClick={handleFetchDatabaseSources}
+        className="mt-3 w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
+      >
+        View All Database Sources
+      </button>
+    </div>
+  )
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -208,6 +314,9 @@ export default function NotebookPage() {
           <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Data Sources</h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Add documents to your knowledge base</p>
         </div>
+
+        {/* Add Filter Selector */}
+        <FilterSelector />
 
         {/* Tabs */}
         <div className="flex border-b border-slate-200 dark:border-slate-700">
@@ -359,6 +468,55 @@ export default function NotebookPage() {
               ))}
             </div>
           </div>
+
+          {/* Database Sources Modal */}
+          {showDatabaseSources && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
+                    Database Sources ({databaseSources.length})
+                  </h3>
+                  <button
+                    onClick={() => setShowDatabaseSources(false)}
+                    className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  {databaseSources.length === 0 ? (
+                    <p className="text-slate-600 dark:text-slate-400 text-center py-4">
+                      No sources found in database
+                    </p>
+                  ) : (
+                    databaseSources.map((source, index) => (
+                      <div
+                        key={index}
+                        className="p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-slate-800 dark:text-white">
+                            {source.source}
+                          </span>
+                          <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                            {source.type}
+                          </span>
+                        </div>
+                        <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                          {source.chunks} chunks
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-500 bg-slate-50 dark:bg-slate-700 p-2 rounded">
+                          {source.preview}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

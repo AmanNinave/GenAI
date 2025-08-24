@@ -41,7 +41,7 @@ export async function processUploadedFile(filePath, originalName) {
       case '.vtt':
         return await processVTT(filePath, originalName);
       default:
-        throw new Error(`Unsupported file type: ${extension}. Supported types: PDF, TXT, CSV, DOCX`);
+        throw new Error(`Unsupported file type: ${extension}. Supported types: PDF, TXT, CSV, DOCX, VTT`);
     }
   } catch (error) {
     console.error('Error processing uploaded file:', error);

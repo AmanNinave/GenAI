@@ -9,10 +9,10 @@ function getOpenAIClient() {
   return new OpenAI({ apiKey });
 }
 
-export async function generateRAGResponse(userQuery, conversationHistory = []) {
+export async function generateRAGResponse(userQuery, conversationHistory = [], filters = {}) {
   try {
-    // Search for relevant documents
-    const relevantDocs = await searchSimilarDocuments(userQuery, 3);
+    // Search for relevant documents with optional filters
+    const relevantDocs = await searchSimilarDocuments(userQuery, 3, filters);
 
     if (!relevantDocs || relevantDocs.length === 0) {
       return {
@@ -75,5 +75,9 @@ export async function generateRAGResponse(userQuery, conversationHistory = []) {
     console.error("Error generating RAG response:", error);
     throw error;
   }
+}
+
+export function formatConversationHistory(messages) {
+  return messages.map(msg => `${msg.role}: ${msg.content}`).join('\n');
 }
  

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check-setup": "node scripts/check-setup.js"
+    "check-setup": "node scripts/check-setup.js",
+    "query-db": "node scripts/query-database.js"
   },
   "dependencies": {
     "@langchain/community": "^0.3.53",

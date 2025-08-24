@@ -76,14 +76,28 @@ export async function initializeVectorStore() {
   }
 }
 
-export async function searchSimilarDocuments(query, k = 3) {
+export async function searchSimilarDocuments(query, k = 3, filters = {}) {
   try {
     const vectorStore = await initializeVectorStore();
     if (!vectorStore) {
       throw new Error('Vector store not initialized');
     }
 
-    const retriever = vectorStore.asRetriever({ k });
+    // Build filter for Qdrant if filters are provided
+    let qdrantFilter = null;
+    if (Object.keys(filters).length > 0) {
+      qdrantFilter = {
+        must: Object.entries(filters).map(([key, value]) => ({
+          key: key,
+          match: { value: value }
+        }))
+      };
+    }
+
+    const retriever = vectorStore.asRetriever({ 
+      k,
+      filter: qdrantFilter
+    });
     const relevantDocs = await retriever.invoke(query);
     
     return relevantDocs;
@@ -91,4 +105,61 @@ export async function searchSimilarDocuments(query, k = 3) {
     console.error('Error searching documents:', error);
     throw error;
   }
+}
+
+export async function deleteDocumentsByFilter(filter) {
+  try {
+    const vectorStore = await initializeVectorStore();
+    if (!vectorStore) {
+      throw new Error('Vector store not initialized');
+    }
+
+    // Get documents matching the filter
+    const docs = await searchSimilarDocuments("", 1000, filter);
+    
+    // Delete each document
+    for (const doc of docs) {
+      if (doc.metadata.id) {
+        await vectorStore.delete([doc.metadata.id]);
+      }
+    }
+    
+    return { deleted: docs.length };
+  } catch (error) {
+    console.error('Error deleting documents:', error);
+    throw error;
+  }
+}
+
+export async function listAllDocuments() {
+  try {
+    const vectorStore = await initializeVectorStore();
+    if (!vectorStore) {
+      throw new Error('Vector store not initialized');
+    }
+
+    // Get all documents (with a high limit)
+    const docs = await searchSimilarDocuments("", 1000);
+    
+    // Group by type
+    const grouped = docs.reduce((acc, doc) => {
+      const type = doc.metadata.type || 'unknown';
+      if (!acc[type]) acc[type] = [];
+      acc[type].push({
+        source: doc.metadata.source,
+        content: doc.pageContent.substring(0, 100) + "...",
+        id: doc.metadata.id
+      });
+      return acc;
+    }, {});
+    
+    return grouped;
+  } catch (error) {
+    console.error('Error listing documents:', error);
+    throw error;
+  }
+}
+
+export async function getVectorStore() {
+  return await initializeVectorStore();
 } 
