@@ -21,7 +21,7 @@ export async function POST(request) {
     }
 
     // Validate file type
-    const allowedTypes = ['.pdf', '.txt', '.csv', '.docx'];
+    const allowedTypes = ['.pdf', '.txt', '.csv', '.docx', '.vtt'];
     const fileExtension = path.extname(file.name).toLowerCase();
     if (!allowedTypes.includes(fileExtension)) {
       return NextResponse.json({ 

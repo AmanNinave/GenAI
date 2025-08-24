@@ -279,7 +279,7 @@ export default function NotebookPage() {
                 ref={fileInputRef}
                 type="file"
                 onChange={handleFileUpload}
-                accept=".pdf,.txt,.csv,.docx"
+                accept=".pdf,.txt,.csv,.docx,.vtt"
                 className="hidden"
               />
               <button
@@ -290,7 +290,7 @@ export default function NotebookPage() {
                 {isAddingSource ? "Uploading..." : "Choose File"}
               </button>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                Supported: PDF, TXT, CSV, DOCX (Max 10MB)
+                Supported: PDF, TXT, CSV, DOCX, VTT (Max 10MB)
               </p>
             </div>
           )}

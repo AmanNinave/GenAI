@@ -38,6 +38,8 @@ export async function processUploadedFile(filePath, originalName) {
         return await processText(filePath, originalName);
       case '.docx':
         return await processDocx(filePath, originalName);
+      case '.vtt':
+        return await processVTT(filePath, originalName);
       default:
         throw new Error(`Unsupported file type: ${extension}. Supported types: PDF, TXT, CSV, DOCX`);
     }
@@ -201,3 +203,117 @@ export function cleanupTempFile(filePath) {
     console.error('Error cleaning up temp file:', error);
   }
 } 
+
+
+async function processVTT(filePath, originalName) {
+  try {
+    const vttContent = fs.readFileSync(filePath, 'utf8');
+    
+    // Parse VTT content
+    const lines = vttContent.split('\n');
+    let textContent = '';
+    let isInCue = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Skip VTT header and timestamp lines
+      if (line === 'WEBVTT' || line === '' || line.match(/^\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}/)) {
+        continue;
+      }
+      
+      // Skip cue identifiers (numbers)
+      if (line.match(/^\d+$/)) {
+        continue;
+      }
+      
+      // Add subtitle text
+      if (line.length > 0) {
+        textContent += line + ' ';
+      }
+    }
+    
+    // Clean up the text
+    const cleanedText = textContent
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    if (!cleanedText) {
+      throw new Error('No text content found in VTT file');
+    }
+    
+    const doc = new Document({
+      pageContent: cleanedText,
+      metadata: { 
+        source: originalName, 
+        type: 'vtt',
+        originalFormat: 'WebVTT'
+      }
+    });
+    
+    return [doc];
+  } catch (error) {
+    console.error('Error processing VTT file:', error);
+    throw new Error(`Failed to process VTT file: ${error.message}`);
+  }
+}
+
+// async function processVTTWithTimestamps(filePath, originalName) {
+//   try {
+//     const vttContent = fs.readFileSync(filePath, 'utf8');
+//     const lines = vttContent.split('\n');
+    
+//     let cues = [];
+//     let currentCue = null;
+    
+//     for (let i = 0; i < lines.length; i++) {
+//       const line = lines[i].trim();
+      
+//       if (line === 'WEBVTT' || line === '') {
+//         continue;
+//       }
+      
+//       // Check for timestamp line
+//       const timestampMatch = line.match(/(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})/);
+//       if (timestampMatch) {
+//         if (currentCue) {
+//           cues.push(currentCue);
+//         }
+//         currentCue = {
+//           start: timestampMatch[1],
+//           end: timestampMatch[2],
+//           text: ''
+//         };
+//         continue;
+//       }
+      
+//       // Add text to current cue
+//       if (currentCue && line.length > 0 && !line.match(/^\d+$/)) {
+//         currentCue.text += line + ' ';
+//       }
+//     }
+    
+//     // Add the last cue
+//     if (currentCue) {
+//       cues.push(currentCue);
+//     }
+    
+//     // Create documents for each cue
+//     const docs = cues.map((cue, index) => new Document({
+//       pageContent: cue.text.trim(),
+//       metadata: { 
+//         source: originalName, 
+//         type: 'vtt',
+//         cueIndex: index,
+//         startTime: cue.start,
+//         endTime: cue.end,
+//         originalFormat: 'WebVTT'
+//       }
+//     }));
+    
+//     return docs;
+//   } catch (error) {
+//     console.error('Error processing VTT file:', error);
+//     throw new Error(`Failed to process VTT file: ${error.message}`);
+//   }
+// }
